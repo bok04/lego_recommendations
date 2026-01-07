@@ -11,6 +11,14 @@ class Modal extends HTMLElement {
     this._products = []; // Set to an empty array to store products
     this._productRecommendations = []; // Set to an empty array to store recommendations or content
     this._startButtonText = null; // TODO: Could be used to allow the user to continue where they last left off
+    this._handlers = {
+      start: this._showModal.bind(this),
+      next: this._showNextContent.bind(this),
+      previous: this._showPreviousContent.bind(this),
+      close: this._hideModal.bind(this),
+      finish: this._hideModal.bind(this),
+      restart: this._restartQuiz.bind(this)
+    };
     this.attachShadow({ mode: 'open' });
     this.shadowRoot.innerHTML = `
     <style>
@@ -65,21 +73,21 @@ class Modal extends HTMLElement {
 
   connectedCallback() {
     this._modal = this.shadowRoot.querySelector(".modal");
-    this.shadowRoot.querySelector("#start").addEventListener('click', this._showModal.bind(this));
-    this.shadowRoot.querySelector("#next").addEventListener('click', this._showNextContent.bind(this));
-    this.shadowRoot.querySelector("#previous").addEventListener('click', this._showPreviousContent.bind(this));
-    this.shadowRoot.querySelector(".close").addEventListener('click', this._hideModal.bind(this));
-    this.shadowRoot.querySelector("#finish").addEventListener('click', this._hideModal.bind(this));
-    this.shadowRoot.querySelector("#restart").addEventListener('click', this._restartQuiz.bind(this));
+    this.shadowRoot.querySelector("#start").addEventListener('click', this._handlers.start);
+    this.shadowRoot.querySelector("#next").addEventListener('click', this._handlers.next);
+    this.shadowRoot.querySelector("#previous").addEventListener('click', this._handlers.previous);
+    this.shadowRoot.querySelector(".close").addEventListener('click', this._handlers.close);
+    this.shadowRoot.querySelector("#finish").addEventListener('click', this._handlers.finish);
+    this.shadowRoot.querySelector("#restart").addEventListener('click', this._handlers.restart);
   }
 
   disconnectedCallback() {
-    this.shadowRoot.querySelector("#start").removeEventListener('click', this._showModal);
-    this.shadowRoot.querySelector("#next").removeEventListener('click', this._showNextContent);
-    this.shadowRoot.querySelector("#previous").removeEventListener('click', this._showPreviousContent);
-    this.shadowRoot.querySelector(".close").removeEventListener('click', this._hideModal);
-    this.shadowRoot.querySelector("#finish").addEventListener('click', this._hideModal.bind(this));
-    this.shadowRoot.querySelector("#restart").addEventListener('click', this._restartQuiz.bind(this));
+    this.shadowRoot.querySelector("#start").removeEventListener('click', this._handlers.start);
+    this.shadowRoot.querySelector("#next").removeEventListener('click', this._handlers.next);
+    this.shadowRoot.querySelector("#previous").removeEventListener('click', this._handlers.previous);
+    this.shadowRoot.querySelector(".close").removeEventListener('click', this._handlers.close);
+    this.shadowRoot.querySelector("#finish").removeEventListener('click', this._handlers.finish);
+    this.shadowRoot.querySelector("#restart").removeEventListener('click', this._handlers.restart);
   }
 
   _showModal() {
@@ -157,13 +165,15 @@ class Modal extends HTMLElement {
         }
 
         const radioButtons = this.shadowRoot.querySelectorAll('.radio-button');
-        const selectedRadioButton = Array.from(radioButtons).find(input => input.value === previousAnswer.answer);
-        if (selectedRadioButton) {
+        if (previousAnswer) {
+          const selectedRadioButton = Array.from(radioButtons).find(input => input.value === previousAnswer.answer);
+          if (selectedRadioButton) {
           // Select the previously chosen radio button
-          selectedRadioButton.checked = true;
-          this._answerIndex = currentQuestion.answers.findIndex(answer => answer.value === previousAnswer.answer);
-          this._selectedAnswer = previousAnswer;
-          this._updateNextButtonDisableState();
+            selectedRadioButton.checked = true;
+            this._answerIndex = currentQuestion.answers.findIndex(answer => answer.value === previousAnswer.answer);
+            this._selectedAnswer = previousAnswer;
+            this._updateNextButtonDisableState();
+          }
         }
       }
       this._updatePreviousButtonVisibility();
